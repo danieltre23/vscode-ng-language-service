@@ -588,6 +588,7 @@ export class Session {
     this.clientCapabilities = params.capabilities;
     return {
       capabilities: {
+        codeActionProvider: this.ivy,
         codeLensProvider: this.ivy ? {resolveProvider: true} : undefined,
         textDocumentSync: lsp.TextDocumentSyncKind.Incremental,
         completionProvider: {

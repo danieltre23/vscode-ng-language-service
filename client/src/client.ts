@@ -117,6 +117,18 @@ export class AngularLanguageClient implements vscode.Disposable {
 
           return angularResultsPromise;
         },
+        provideCodeActions: async(
+            document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext,
+            token: vscode.CancellationToken): Promise<vscode.CodeAction[]|undefined> => {
+          if (context.diagnostics.length === 0) return;
+          const fixes: vscode.CodeAction[] = [];
+          for (const diag of context.diagnostics) {
+            const quickFix = getQuickFixForDiag(diag, document);
+            if (quickFix === undefined) continue;
+            fixes.push(quickFix);
+          }
+          return fixes;
+        },
         provideSignatureHelp: async (
             document: vscode.TextDocument, position: vscode.Position,
             context: vscode.SignatureHelpContext, token: vscode.CancellationToken,
@@ -488,4 +500,15 @@ function allProjectsSupportIvy() {
     }
   }
   return true;
+}
+
+function getQuickFixForDiag(diag: vscode.Diagnostic, doc: vscode.TextDocument): vscode.CodeAction|
+    undefined {
+  const lspDiag = diag as lsp.Diagnostic;
+  const data = lspDiag.data as {title: string, range: vscode.Range, fix: string};
+  if (data === undefined) return;
+  const fix = new vscode.CodeAction(data.title, vscode.CodeActionKind.QuickFix);
+  fix.edit = new vscode.WorkspaceEdit();
+  fix.edit.replace(doc.uri, data.range, data.fix);
+  return fix;
 }

@@ -34,12 +34,13 @@ function tsDiagnosticCategoryToLspDiagnosticSeverity(category: ts.DiagnosticCate
  * @param scriptInfo Used to compute proper offset.
  */
 export function tsDiagnosticToLspDiagnostic(
-    tsDiag: ts.Diagnostic, scriptInfo: ts.server.ScriptInfo): lsp.Diagnostic {
+    tsDiag: (ts.Diagnostic&{quickFixData?: unknown}),
+    scriptInfo: ts.server.ScriptInfo): lsp.Diagnostic {
   const textSpan: ts.TextSpan = {
     start: tsDiag.start || 0,
     length: tsDiag.length || 0,
   };
-  return lsp.Diagnostic.create(
+  const diag = lsp.Diagnostic.create(
       tsTextSpanToLspRange(scriptInfo, textSpan),
       ts.flattenDiagnosticMessageText(tsDiag.messageText, '\n'),
       tsDiagnosticCategoryToLspDiagnosticSeverity(tsDiag.category),
@@ -47,4 +48,6 @@ export function tsDiagnosticToLspDiagnostic(
       tsDiag.source,
       tsRelatedInformationToLspRelatedInformation(scriptInfo, tsDiag.relatedInformation),
   );
+  diag.data = tsDiag.quickFixData;
+  return diag;
 }
